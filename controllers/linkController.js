@@ -51,3 +51,14 @@ export const getPrevLinks = async (req, res, next) => {
     next(error)
   }
 }
+
+// Track link usage
+export const trachLinkUsage = async (req, res, next) => {
+  try {
+    // Destructer the slug from request params
+    const {slug} = req.params
+    console.log(slug)
+  } catch (error) {
+    
+  }
+}
