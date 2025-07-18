@@ -7,5 +7,6 @@ const router = express()
 router.post("/create-link", authenticate, authorize("user"), createLink)
 router.get("/get-prev-links", authenticate, authorize("user"), getPrevLinks)
 router.get("/track-link/:slug", trachLinkUsage)
+router.put("/update/:slug", authenticate, authorize("user"), updateLink);
 
 export default router

@@ -78,3 +78,16 @@ export const trachLinkUsage = async (req, res, next) => {
     next(error);
   }
 };
+
+// Update the link
+export const updateLink = (req, res, next) => {
+  try {
+    // Get the slug from the request parameters
+    const { slug } = req.params;
+    // Get details from request body
+    const { phone, message, customSlug } = req.body;
+    const userId = req.user.id; // Get user id from authentication
+  } catch (error) {
+    next(error)
+  }
+}
