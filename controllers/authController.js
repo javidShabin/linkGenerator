@@ -1,8 +1,8 @@
-import { userSignupValidation } from "../config/authValidations.js";
+import { userLoginValidation, userSignupValidation } from "../config/authValidations.js";
 import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
 import { generateToken } from "../utils/generateToken.js";
-import { hashPassword } from "../utils/hashPassword.js";
+import { comparePassword, hashPassword } from "../utils/hashPassword.js";
 
 
 // **************************** Authentication**************************************
@@ -59,8 +59,20 @@ export const signupUser = async (req, res, next) => {
 // User login
 export const loginUser = async (req, res, next) => {
   try {
-    
+    // Validate the user email and password
+    userLoginValidation(req.body)
+    // Destructer email and password from request body
+    const {email, password} = req.body
+    // Check the user is singuped using the email
+    const isUser = await userModel.findOne({email})
+    // User not signuped throw error
+    if (!isUser) {
+      throw new AppError("No account found with this email. Please sign up first.", 404)
+    }
+    // Compare the password
+    const passwordIsMatch = await comparePassword(password, isUser.password)
+    console.log(passwordIsMatch)
   } catch (error) {
-    
+    next(error)
   }
 }
