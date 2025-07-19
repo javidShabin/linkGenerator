@@ -80,14 +80,44 @@ export const trachLinkUsage = async (req, res, next) => {
 };
 
 // Update the link
-export const updateLink = (req, res, next) => {
+export const updateLink = async (req, res, next) => {
   try {
     // Get the slug from the request parameters
     const { slug } = req.params;
     // Get details from request body
     const { phone, message, customSlug } = req.body;
-    const userId = req.user.id; // Get user id from authentication
+    // Find the link by slug
+    const existingLink = await linkModel.findOne({ slug });
+
+    // Check if the link exists
+    if (!existingLink) {
+      throw new AppError("Link is not found", 404);
+    }
+    // Update fields if provided
+    if (phone) existingLink.phone = phone;
+    if (message !== undefined) existingLink.message = message;
+
+    // Optional: Regenerate slug if customSlug provided
+    if (customSlug) {
+      existingLink.slug = generateSlug(customSlug);
+    }
+
+    // Regenerate WhatsApp link
+    existingLink.whatsappLink = generateWhatsAppLink(
+      existingLink.phone,
+      existingLink.message
+    );
+
+    // Save the updated link
+    await existingLink.save();
+
+    // Respond with success
+    res.status(200).json({
+      success: true,
+      message: "Link updated successfully",
+      data: existingLink,
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
