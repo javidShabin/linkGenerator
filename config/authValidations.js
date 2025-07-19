@@ -13,6 +13,15 @@ export const userSignupValidation = (data) => {
 
   // Compare the password and confirmPassword
   if (password !== confirmPassword) {
-    throw new AppError("Password and confirm password do not match", 400)
+    throw new AppError("Password and confirm password do not match", 400);
+  }
+};
+
+// User loign validation
+export const userLoginValidation = (data) => {
+  // Destructer user email and password from data
+  const { email, password } = data;
+  if (!email || !password) {
+    throw new AppError("Email and password is required", 400);
   }
 };

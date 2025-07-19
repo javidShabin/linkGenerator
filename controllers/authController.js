@@ -55,3 +55,12 @@ export const signupUser = async (req, res, next) => {
     next(error)
   }
 };
+
+// User login
+export const loginUser = async (req, res, next) => {
+  try {
+    
+  } catch (error) {
+    
+  }
+}
