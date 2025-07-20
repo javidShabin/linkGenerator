@@ -4,6 +4,11 @@ import { AppError } from "../utils/AppError.js";
 import { generateToken } from "../utils/generateToken.js";
 import { hashPassword } from "../utils/hashPassword.js";
 
+
+// **************************** Authentication**************************************
+//  *************************Singup and Login *************************************
+
+// User singup
 export const signupUser = async (req, res, next) => {
   try {
     // Validate the user details
@@ -27,19 +32,21 @@ export const signupUser = async (req, res, next) => {
       phone,
       role
     })
+    // Save the new user
     await newUser.save()
-    //Token creation
+
+    // Generate the user token by JWT using id , email and role
     const token = generateToken({
       id: newUser.id,
       email: newUser.email,
       role: newUser.role,
     });
-    res.cookie("userToken", token, {
+    res.cookie("userToken", token, { // Store the token in cookie
       httpOnly: true,
       secure: false,
       sameSite: "strict",
     });
-    
+    // Send the response to client
     res.status(201).json({
       success: true,
       message: "User created successfully",
