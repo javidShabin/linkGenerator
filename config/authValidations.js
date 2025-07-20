@@ -1,6 +1,6 @@
 // ************ Auth validations *****************
 
-import { AppError } from "../utils/AppError";
+import { AppError } from "../utils/AppError.js";
 
 // User signup validation
 export const userSignupValidation = (data) => {
