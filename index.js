@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { dbConnection } from "./config/dbConnection.js";
+import v1Router from "./routes/index.js"
 const server = express();
 const PORT = 3000;
 
@@ -20,6 +21,8 @@ server.use(cookieParser());
 server.get("/", (req, res) => {
   res.send("Server is up and running!");
 });
+
+server.use("/v1", v1Router)
 
 // Database connection function
 dbConnection()
