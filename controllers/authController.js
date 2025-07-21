@@ -71,7 +71,25 @@ export const loginUser = async (req, res, next) => {
     }
     // Compare the password
     const passwordIsMatch = await comparePassword(password, isUser.password)
-    console.log(passwordIsMatch)
+    if (!passwordIsMatch) {
+      throw new AppError("Invalid email or password", 401);
+    }
+    // Generate the user token by JWT using id , email and role
+    const token = generateToken({
+      id: isUser.id,
+      email: isUser.email,
+      role: isUser.role,
+    });
+    res.cookie("userToken", token, { // Store the token in cookie
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+    });
+    // Send the response to client
+    res.status(201).json({
+      success: true,
+      message: "User loggined successfully",
+    });
   } catch (error) {
     next(error)
   }
