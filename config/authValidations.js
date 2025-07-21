@@ -10,4 +10,9 @@ export const userSignupValidation = (data) => {
   if (!userName || !email || !password || !confirmPassword || !phone) {
     throw new AppError("All fields are required", 400);
   }
+
+  // Compare the password and confirmPassword
+  if (password !== confirmPassword) {
+    throw new AppError("Password and confirm password do not match", 400)
+  }
 };
