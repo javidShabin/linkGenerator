@@ -22,6 +22,14 @@ const linkSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    clicks: {
+      type: Number,
+      default: 0,
+    },
+    isEditable: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
