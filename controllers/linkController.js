@@ -1,4 +1,5 @@
 import linkModel from "../models/linkModel.js";
+import { AppError } from "../utils/AppError.js";
 import { generateSlug, generateWhatsAppLink } from "../utils/generateLink.js";
 
 // ******************* Link generating controllers ********************
@@ -35,14 +36,18 @@ export const createLink = async (req, res, next) => {
 };
 
 // Get previous links
-export const getPrevLinks = async () => {
+export const getPrevLinks = async (req, res, next) => {
   try {
     // Get user id from authentication
     const userId = req.user.id
     // Find all links by user id
     const links = await linkModel.find({userId})
-    console.log(links)
+    // If not get any links throw error
+    if (!links) {
+      throw new AppError("Not previous link not found", 400)
+    }
+    res.status(200).json({success: true, message: "Previous links fetched", data: links})
   } catch (error) {
-    
+    next(error)
   }
 }
