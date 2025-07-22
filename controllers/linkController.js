@@ -39,26 +39,42 @@ export const createLink = async (req, res, next) => {
 export const getPrevLinks = async (req, res, next) => {
   try {
     // Get user id from authentication
-    const userId = req.user.id
+    const userId = req.user.id;
     // Find all links by user id
-    const links = await linkModel.find({userId})
+    const links = await linkModel.find({ userId });
     // If not get any links throw error
     if (!links) {
-      throw new AppError("Not previous link not found", 400)
+      throw new AppError("Not previous link not found", 404);
     }
-    res.status(200).json({success: true, message: "Previous links fetched", data: links})
+    res
+      .status(200)
+      .json({ success: true, message: "Previous links fetched", data: links });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 // Track link usage
 export const trachLinkUsage = async (req, res, next) => {
   try {
     // Destructer the slug from request params
-    const {slug} = req.params
-    console.log(slug)
+    const { slug } = req.params;
+    // Find the link using the slug
+    const link = await linkModel.findOne({ slug });
+    // The link is not found throw error
+    if (!link) {
+      throw new AppError("Link not found", 404);
+    }
+    // Increment the clicks count
+    link.clicks = (link.clicks || 0) + 1;
+    await link.save(); // save the count
+    // Send the response to client
+    res.status(200).json({
+      success: true,
+      message: "Link usage tracked",
+      clicks: link.clicks,
+    });
   } catch (error) {
-    
+    next(error);
   }
-}
+};
