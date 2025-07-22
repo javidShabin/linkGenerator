@@ -93,6 +93,7 @@ export const updateLink = async (req, res, next) => {
     if (!existingLink) {
       throw new AppError("Link is not found", 404);
     }
+
     // Update fields if provided
     if (phone) existingLink.phone = phone;
     if (message !== undefined) existingLink.message = message;
@@ -116,6 +117,25 @@ export const updateLink = async (req, res, next) => {
       success: true,
       message: "Link updated successfully",
       data: existingLink,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Delete a link
+export const deleteLink = async (req, res, next) => {
+  try {
+    // Get the slug from request params
+    const { slug } = req.params;
+    // Find the link by slug
+    const deletedLink = await linkModel.findOneAndDelete({ slug });
+    if (!deletedLink) throw new AppError("Link not found", 404); // Not found any link by the sluge throw error
+
+    // Send response to client
+    res.status(200).json({
+      success: true,
+      message: "Link deleted successfully",
     });
   } catch (error) {
     next(error);
