@@ -1,7 +1,7 @@
-// ******************* Link generating controllers ********************
-
 import linkModel from "../models/linkModel.js";
 import { generateSlug, generateWhatsAppLink } from "../utils/generateLink.js";
+
+// ******************* Link generating controllers ********************
 
 // Create whatsapp link
 export const createLink = async (req, res, next) => {
@@ -33,3 +33,16 @@ export const createLink = async (req, res, next) => {
     next(error);
   }
 };
+
+// Get previous links
+export const getPrevLinks = async () => {
+  try {
+    // Get user id from authentication
+    const userId = req.user.id
+    // Find all links by user id
+    const links = await linkModel.find({userId})
+    console.log(links)
+  } catch (error) {
+    
+  }
+}
