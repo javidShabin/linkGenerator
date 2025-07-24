@@ -1,8 +1,15 @@
-import express from "express"
-import { loginUser, signupUser } from "../controllers/authController.js"
-const router = express()
+import express from "express";
+import {
+  checkUser,
+  loginUser,
+  signupUser,
+} from "../controllers/authController.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
+import { authorize } from "../middlewares/authorize.js";
+const router = express();
 
-router.post("/signup", signupUser)
-router.post("/login", loginUser)
+router.post("/signup", signupUser);
+router.post("/login", loginUser);
+router.get("/check-user", authenticate, authorize("user"), checkUser);
 
-export default router
+export default router;
