@@ -54,20 +54,39 @@ export const generateQrCode = async (req, res, next) => {
 export const downloadQrCode = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { format = "png" } = req.query; // default to PNG
 
     const qr = await QRCodeModel.findById(id);
     if (!qr) throw new AppError("QR code not found", 404);
 
-    // Increment download count
     qr.downloadCount += 1;
     await qr.save();
 
-    const base64Data = qr.qrCodeImage.replace(/^data:image\/png;base64,/, "");
-    const imgBuffer = Buffer.from(base64Data, "base64");
+    const mimeTypes = {
+      png: "image/png",
+      jpeg: "image/jpeg",
+      jpg: "image/jpeg",
+      svg: "image/svg+xml",
+    };
 
-    res.setHeader("Content-Type", "image/png");
-    res.setHeader("Content-Disposition", `attachment; filename=qr-code.png`);
-    res.send(imgBuffer);
+    if (!mimeTypes[format]) {
+      return res.status(400).json({ message: "Unsupported format" });
+    }
+
+    const options = {
+      type: format === "svg" ? "svg" : "image",
+      rendererOpts: {
+        quality: 0.92,
+      },
+    };
+
+    QRCode.toBuffer(qr.whatsappLink, options, (err, buffer) => {
+      if (err) return next(new AppError("QR generation failed", 500));
+
+      res.setHeader("Content-Type", mimeTypes[format]);
+      res.setHeader("Content-Disposition", `attachment; filename=qr-code.${format}`);
+      res.send(buffer);
+    });
   } catch (error) {
     next(error);
   }
