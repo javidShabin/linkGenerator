@@ -103,6 +103,24 @@ export const loginUser = async (req, res, next) => {
     next(error);
   }
 };
+// Get user profile by user id
+export const userProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    // Find the user by ID
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      throw new AppError("User not found", 404)
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 // Check user
 export const checkUser = async (req, res, next) => {
