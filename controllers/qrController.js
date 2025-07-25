@@ -4,60 +4,73 @@ import QRCodeModel from "../models/qrModel.js";
 import linkModel from "../models/linkModel.js";
 import { AppError } from "../utils/AppError.js";
 
+// controllers/qrCodeController.js
 export const generateQrCode = async (req, res, next) => {
   try {
-    const { slug } = req.params;
+    
     const userId = req.user.id;
+    const { name } = req.params;
 
-    // Find the WhatsApp link from the Link model
-    const link = await linkModel.findOne({ slug });
-    if (!link) throw new AppError("Link not found", 404);
+    const link = await linkModel.findOne({ name });
 
-    // Optional: prevent duplicate QR generation for same link
-    const existingQR = await QRCodeModel.findOne({
-      linkId: link._id,
-      generatedFor: "whatsappLink",
-    });
-
-    if (existingQR) {
-      return res.status(200).json({
-        success: true,
-        message: "QR code already exists",
-        data: existingQR,
-      });
+    if (!link) {
+      return next(new AppError("Link not found", 404));
     }
 
-    // Generate QR code from the WhatsApp link
-    const qrCodeImage = await QRCode.toDataURL(link.whatsappLink);
+    const whatsappLink = link?.whatsappLink;
+    if (!whatsappLink) {
+      return next(new AppError("WhatsApp link not found in Link model", 400));
+    }
 
-    // Save QR code to DB
-    const newQR = new QRCodeModel({
+    let qrCodeImage;
+    try {
+      qrCodeImage = await QRCode.toDataURL(whatsappLink);
+  
+    } catch (err) {
+      
+      return next(new AppError("Failed to generate QR code", 500));
+    }
+
+    
+    const qrCode = await QRCodeModel.create({
       userId,
       linkId: link._id,
+      whatsappLink,
       qrCodeImage,
       generatedFor: "whatsappLink",
     });
 
-    await newQR.save();
-
     res.status(201).json({
-      success: true,
-      message: "QR code generated successfully",
-      data: newQR,
+      status: "success",
+      message: "QR Code generated successfully",
+      data: qrCode,
     });
-  } catch (error) {
-    next(error);
+
+  } catch (err) {
+    console.error("❌ Controller error:", err.message);
+    next(new AppError("Internal server error", 500));
   }
 };
 
-// controllers/qrCodeController.js
+
+
+
+
+// Download the image needed format
 export const downloadQrCode = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { format = "png" } = req.query; // default to PNG
+    const format = (req.query.format || "png").toLowerCase().trim();
+
+    console.log("Requested format:", format);
 
     const qr = await QRCodeModel.findById(id);
+    
     if (!qr) throw new AppError("QR code not found", 404);
+
+    if (!qr.whatsappLink || typeof qr.whatsappLink !== "string") {
+      return res.status(400).json({ message: "Invalid or missing WhatsApp link" });
+    }
 
     qr.downloadCount += 1;
     await qr.save();
@@ -66,10 +79,10 @@ export const downloadQrCode = async (req, res, next) => {
       png: "image/png",
       jpeg: "image/jpeg",
       jpg: "image/jpeg",
-      svg: "image/svg+xml",
     };
 
     if (!mimeTypes[format]) {
+
       return res.status(400).json({ message: "Unsupported format" });
     }
 
@@ -81,7 +94,10 @@ export const downloadQrCode = async (req, res, next) => {
     };
 
     QRCode.toBuffer(qr.whatsappLink, options, (err, buffer) => {
-      if (err) return next(new AppError("QR generation failed", 500));
+      if (err) {
+        console.error("QR generation failed:", err);
+        return next(new AppError("QR generation failed", 500));
+      }
 
       res.setHeader("Content-Type", mimeTypes[format]);
       res.setHeader("Content-Disposition", `attachment; filename=qr-code.${format}`);

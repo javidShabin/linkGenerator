@@ -13,6 +13,10 @@ const qrCodeSchema = new mongoose.Schema(
       ref: "Link",
       required: true,
     },
+     whatsappLink: {
+      type: String,
+      required: true,
+    },
     qrCodeImage: {
       type: String, // base64 Data URL (or file URL if storing in cloud)
       required: true,
