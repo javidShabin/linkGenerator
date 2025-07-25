@@ -109,7 +109,7 @@ export const userProfile = async (req, res, next) => {
     const userId = req.user.id;
 
     // Find the user by ID
-    const user = await userModel.findById(userId);
+    const user = await userModel.findById(userId).select("-password");
 
     if (!user) {
       throw new AppError("User not found", 404)
