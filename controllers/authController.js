@@ -53,6 +53,7 @@ export const signupUser = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "User created successfully",
+      user: newUser
     });
   } catch (error) {
     next(error);
@@ -96,6 +97,7 @@ export const loginUser = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "User loggined successfully",
+      user: isUser
     });
   } catch (error) {
     next(error);
