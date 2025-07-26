@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import userModel from "../models/userModel.js";
 import stripe from "../utils/stripe.js";
 import paymentModel from "../models/paymentModel.js";
@@ -38,8 +40,8 @@ export const createCheckoutSession = async (req, res, next) => {
         userId: user._id.toString(),
         plan,
       },
-      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+      success_url: `${process.env.CLIENT_URL}/user/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_URL}/user/payment-cancel`,
     });
 
     await paymentModel.create({
@@ -55,5 +57,46 @@ export const createCheckoutSession = async (req, res, next) => {
   } catch (err) {
     console.error("Stripe Checkout Error:", err.message);
     res.status(400).json({ error: err.message });
+  }
+};
+
+
+export const getStripeSessionDetails = async (req, res) => {
+  try {
+    // Fetch session from Stripe using sessionId from URL
+    const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
+
+    // Validate session first
+    if (!session || session.payment_status !== "paid") {
+      return res.status(400).json({ error: "Invalid or unpaid session." });
+    }
+
+    // Extract metadata
+    const userId = session.metadata?.userId;
+    const plan = session.metadata?.plan;
+
+    // 1. Update payment record
+    const existingPayment = await paymentModel.findOneAndUpdate(
+      { sessionId: session.id },
+      { status: true }, // mark payment as successful
+      { new: true }
+    );
+
+    // 2. Update user isPro status
+    if (userId) {
+      await userModel.findByIdAndUpdate(userId, { isPro: true });
+    }
+
+    // 3. Respond with payment details
+    res.status(200).json({
+      amount: session.amount_total / 100,
+      currency: session.currency,
+      status: session.payment_status,
+      plan: plan,
+      paymentUpdated: existingPayment ? true : false,
+    });
+
+  } catch (err) {
+    console.error("Stripe session fetch failed:", err.message);
   }
 };
