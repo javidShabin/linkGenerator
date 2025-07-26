@@ -12,13 +12,13 @@ const router = express.Router();
 router.post(
   "/create-checkout-session",
   authenticate,
-  authorize("user", "pro"),
+  authorize("user","pro"),
   createCheckoutSession
 );
 router.get(
   "/session/:sessionId",
   authenticate,
-  authorize("user", "pro"),
+  authorize("user","pro"),
   getStripeSessionDetails
 );
 
