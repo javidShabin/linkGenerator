@@ -1,34 +1,59 @@
-// server/controllers/paymentController.js
+import userModel from "../models/userModel.js";
 import stripe from "../utils/stripe.js";
+import paymentModel from "../models/paymentModel.js";
 
 export const createCheckoutSession = async (req, res, next) => {
   try {
-    console.log("🔁 Creating Stripe Checkout Session...");
+
+    const { plan } = req.body;
+    const email = req.user.email;
+
+    const user = await userModel.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Determine plan price
+    let amount = 0;
+    if (plan === "pro-plan") amount = 19900; // ₹199/year
+    else if (plan === "one-time") amount = 49900; // ₹499/lifetime
+    else return res.status(400).json({ error: "Invalid plan selected" });
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
+      payment_method_types: ["card"],
+      mode: "payment",
       line_items: [
         {
           price_data: {
-            currency: 'inr',
+            currency: "inr",
             product_data: {
-              name: 'Pro Plan - WhatsApp Tool',
+              name: `WhatsApp Tool - ${
+                plan === "pro-plan" ? "Pro Plan" : "One-Time Plan"
+              }`,
             },
-            unit_amount: 19900, // ₹199 = 19900 paise
+            unit_amount: amount,
           },
           quantity: 1,
         },
       ],
-      success_url: `${process.env.CLIENT_URL}/payment-success`,
+      metadata: {
+        userId: user._id.toString(),
+        plan,
+      },
+      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
     });
 
-    console.log("✅ Stripe session created:", session.url);
-    res.status(200).json({ url: session.url });
+    await paymentModel.create({
+      userId: user._id,
+      sessionId: session.id,
+      amount: amount / 100,
+      currency: "INR",
+      status: "pending",
+      plan,
+    });
 
+    res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error("❌ Stripe Checkout Error:", err.message);
+    console.error("Stripe Checkout Error:", err.message);
     res.status(400).json({ error: err.message });
   }
 };
