@@ -84,7 +84,7 @@ export const getStripeSessionDetails = async (req, res) => {
 
     // 2. Update user isPro status
     if (userId) {
-      await userModel.findByIdAndUpdate(userId, { isPro: true });
+      await userModel.findByIdAndUpdate(userId, { isPro: true, role:"pro"});
     }
 
     // 3. Respond with payment details
