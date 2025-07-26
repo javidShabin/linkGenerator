@@ -5,7 +5,7 @@ import { downloadQrCode, generateQrCode } from "../controllers/qrController.js"
 const router = express()
 
 
-router.post("/generate-qr/:slug",authenticate, authorize("user"), generateQrCode)
+router.post("/generate-qr/:slug",authenticate, authorize("pro"), generateQrCode)
 router.get("/download/:id", authenticate, authorize("user"), downloadQrCode);
 
 
