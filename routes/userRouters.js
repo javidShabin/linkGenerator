@@ -13,9 +13,9 @@ const router = express();
 
 router.post("/signup", signupUser);
 router.post("/login", loginUser);
-router.delete("/logout", authenticate, authorize("user"), logoutUser);
-router.get("/user-profile", authenticate, authorize("user"), userProfile);
-router.get("/check-user", authenticate, authorize("user"), checkUser);
+router.delete("/logout", authenticate, authorize("user", "pro"), logoutUser);
+router.get("/user-profile", authenticate, authorize("user", "pro"), userProfile);
+router.get("/check-user", authenticate, authorize("user", "pro"), checkUser);
 router.get("/check-pro",  authenticate, authorize("pro"), isProUser)
 
 export default router;
