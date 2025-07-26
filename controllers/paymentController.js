@@ -3,6 +3,8 @@ import stripe from "../utils/stripe.js";
 
 export const createCheckoutSession = async (req, res, next) => {
   try {
+    console.log("🔁 Creating Stripe Checkout Session...");
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -22,8 +24,11 @@ export const createCheckoutSession = async (req, res, next) => {
       cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
     });
 
-    res.json({ url: session.url });
+    console.log("✅ Stripe session created:", session.url);
+    res.status(200).json({ url: session.url });
+
   } catch (err) {
-    next(err);
+    console.error("❌ Stripe Checkout Error:", err.message);
+    res.status(400).json({ error: err.message });
   }
 };
