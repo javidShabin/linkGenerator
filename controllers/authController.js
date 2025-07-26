@@ -141,19 +141,28 @@ export const logoutUser = async (req, res, next) => {
   }
 };
 
-
 // Check user
 export const checkUser = async (req, res, next) => {
   try {
-    // Get user from req.user
-    const user = req.user;
-    // Check user authorizes or not
-    if (!user) {
-      throw new AppError("User not authorised", 400);
+    // Check if req.user exists (set by auth middleware)
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "User not authorized" });
     }
+
+    // Fetch full user data (excluding password)
+    const user = await userModel.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     // If user authorized
-    res.json({ success: true, message: "user autherised" });
+    res.status(200).json({
+      success: true,
+      message: "User authorized",
+      user,
+    });
   } catch (error) {
-    res.status(401).json(error);
+    res.status(500).json({ message: "Server error", error });
   }
 };
