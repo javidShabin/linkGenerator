@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import { dbConnection } from "./config/dbConnection.js";
 import v1Router from "./routes/index.js";
 const server = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middlewares
 server.use(
