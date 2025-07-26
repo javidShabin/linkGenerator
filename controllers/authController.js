@@ -46,8 +46,8 @@ export const signupUser = async (req, res, next) => {
     res.cookie("userToken", token, {
       // Store the token in cookie
       httpOnly: true,
-      secure: false,
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
     });
     // Send the response to client
     res.status(201).json({
@@ -90,8 +90,8 @@ export const loginUser = async (req, res, next) => {
     res.cookie("userToken", token, {
       // Store the token in cookie
       httpOnly: true,
-      secure: false,
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
     });
     // Send the response to client
     res.status(201).json({
@@ -127,8 +127,8 @@ export const logoutUser = async (req, res, next) => {
     // Clear the userToken cookie
     res.clearCookie("userToken", {
       httpOnly: true,
-      secure: false,
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
     });
 
     // Send a success response
