@@ -2,6 +2,7 @@ import express from "express";
 import {
   checkUser,
   loginUser,
+  logoutUser,
   signupUser,
   userProfile,
 } from "../controllers/authController.js";
@@ -11,7 +12,8 @@ const router = express();
 
 router.post("/signup", signupUser);
 router.post("/login", loginUser);
-router.get("/user-profile", authenticate, authorize("user"), userProfile)
+router.delete("/logout", authenticate, authorize("user"), logoutUser);
+router.get("/user-profile", authenticate, authorize("user"), userProfile);
 router.get("/check-user", authenticate, authorize("user"), checkUser);
 
 export default router;

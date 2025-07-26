@@ -121,6 +121,26 @@ export const userProfile = async (req, res, next) => {
   }
 };
 
+// User logout
+export const logoutUser = async (req, res, next) => {
+  try {
+    // Clear the userToken cookie
+    res.clearCookie("userToken", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+    });
+
+    // Send a success response
+    res.status(200).json({
+      success: true,
+      message: "User logged out successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 // Check user
 export const checkUser = async (req, res, next) => {
