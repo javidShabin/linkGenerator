@@ -10,7 +10,7 @@ export const isProUser = async (req, res, next) => {
     // Fetch full user data (excluding password)
     const user = await userModel.findById(req.user.id).select("-password");
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return next(AppError("User not pro", 404));
     }
 
     // If user authorized
