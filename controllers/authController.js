@@ -81,6 +81,8 @@ export const loginUser = async (req, res, next) => {
     if (!passwordIsMatch) {
       throw new AppError("Invalid email or password", 401);
     }
+    isUser.lastLogin = new Date();
+    await isUser.save();
     // Generate the user token by JWT using id , email and role
     const token = generateToken({
       id: isUser.id,

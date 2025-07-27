@@ -1,5 +1,6 @@
 // models/qrCodeModel.js
 import mongoose from "mongoose";
+import { type } from "os";
 
 const qrCodeSchema = new mongoose.Schema(
   {
@@ -13,7 +14,7 @@ const qrCodeSchema = new mongoose.Schema(
       ref: "Link",
       required: true,
     },
-     whatsappLink: {
+    whatsappLink: {
       type: String,
       required: true,
     },
@@ -26,7 +27,7 @@ const qrCodeSchema = new mongoose.Schema(
       enum: ["whatsappLink", "shortLink"],
       default: "whatsappLink",
     },
-    downloadCount: {
+    generatedCount: {
       type: Number,
       default: 0,
     },

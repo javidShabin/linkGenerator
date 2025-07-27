@@ -20,17 +20,16 @@ export const generateQrCode = async (req, res, next) => {
       return next(new AppError("WhatsApp link not found in Link model", 400));
     }
 
-    // Check if a QR code has already been generated for this user-link pair
-    let qrCode = await QRCodeModel.findOne({ userId, linkId: link._id, generatedFor: "whatsappLink" });
+    // Check if QR code already exists
+    let qrCode = await QRCodeModel.findOne({
+      userId,
+      linkId: link._id,
+      generatedFor: "whatsappLink",
+    });
 
-    // Generate the QR code image if not already present
-    let qrCodeImage;
+    // Generate QR if not exists
     if (!qrCode) {
-      try {
-        qrCodeImage = await QRCode.toDataURL(whatsappLink);
-      } catch (err) {
-        return next(new AppError("Failed to generate QR code", 500));
-      }
+      const qrCodeImage = await QRCode.toDataURL(whatsappLink);
 
       qrCode = await QRCodeModel.create({
         userId,
@@ -38,10 +37,14 @@ export const generateQrCode = async (req, res, next) => {
         whatsappLink,
         qrCodeImage,
         generatedFor: "whatsappLink",
+        generatedCount: 1, // initialize with 1
       });
+    } else {
+      // Increment generatedCount
+      qrCode.generatedCount += 1;
+      await qrCode.save();
     }
 
-    // Optionally, you may want to exclude sensitive fields from the response
     const { userId: uid, ...safeQrCode } = qrCode.toObject();
 
     res.status(201).json({
@@ -49,7 +52,6 @@ export const generateQrCode = async (req, res, next) => {
       message: "QR Code generated successfully",
       data: safeQrCode,
     });
-
   } catch (err) {
     console.error("❌ Controller error:", err);
     next(new AppError("Internal server error", 500));
@@ -66,10 +68,19 @@ export const downloadQrCode = async (req, res, next) => {
     if (!qr) {
       return next(new AppError("QR code not found", 404));
     }
+console.log(qr.downloadCount)
+     // Increment download count
+    qr.downloadCount = (qr.downloadCount || 0) + 1;
+    await qr.save();
 
     if (!qr.whatsappLink || typeof qr.whatsappLink !== "string") {
       return next(new AppError("Invalid or missing WhatsApp link", 400));
     }
+
+     // Increment download count
+    qr.downloadCount = (qr.downloadCount || 0) + 1;
+    await qr.save();
+
 
     // Supported formats
     const mimeTypes = {
@@ -83,10 +94,7 @@ export const downloadQrCode = async (req, res, next) => {
       return next(new AppError("Unsupported format", 400));
     }
 
-    // Increment download count
-    qr.downloadCount = (qr.downloadCount || 0) + 1;
-    await qr.save();
-
+   
     // Set QR options
     const options = {
       type: format === "svg" ? "svg" : "image",
@@ -96,17 +104,28 @@ export const downloadQrCode = async (req, res, next) => {
     };
 
     // Generate and send QR code buffer
-    QRCode.toBuffer(qr.whatsappLink, { type: options.type, rendererOpts: options.rendererOpts }, (err, buffer) => {
-      if (err) {
-        console.error("QR generation failed:", err);
-        return next(new AppError("QR generation failed", 500));
+    QRCode.toBuffer(
+      qr.whatsappLink,
+      { type: options.type, rendererOpts: options.rendererOpts },
+      (err, buffer) => {
+        try {
+          if (err) {
+            console.error("QR generation failed:", err);
+            return next(new AppError("QR generation failed", 500));
+          }
+          res.setHeader("Content-Type", mimeTypes[format]);
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename=qr-code.${format}`
+          );
+          res.send(buffer);
+        } catch (callbackErr) {
+          next(callbackErr);
+        }
       }
-      res.setHeader("Content-Type", mimeTypes[format]);
-      res.setHeader("Content-Disposition", `attachment; filename=qr-code.${format}`);
-      res.send(buffer);
-    });
-
+    );
   } catch (error) {
-    next(error);
+    console.error("Download error:", error);
+    next(new AppError("Something went wrong while downloading QR", 500));
   }
 };
