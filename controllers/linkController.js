@@ -18,18 +18,18 @@ export const createLink = async (req, res, next) => {
     const whatsappLink = generateWhatsAppLink(phone, message);
 
     let brandedPageUrl = null;
-    let username = null;
+    let userIds = null;
 
     const user = await userModel.findById(userId);
     if (!user) return next(new AppError("User not found", 404));
 
     if (user.isPro) {
-      if (!user.userName) {
+      if (!user.id) {
         return next(new AppError("Username required for branded page", 400));
       }
 
-      username = user.userName;
-      brandedPageUrl = `${process.env.CLIENT_URL}/${username}`;
+      userIds = user.id;
+      brandedPageUrl = `${process.env.CLIENT_URL}/${userIds}`;
     }
 
     const newLink = new linkModel({
@@ -39,7 +39,7 @@ export const createLink = async (req, res, next) => {
       message,
       whatsappLink,
       brandedPageUrl,
-      username,
+      username: user.userName,
     });
 
     await newLink.save();
@@ -61,17 +61,20 @@ export const createLink = async (req, res, next) => {
 // Get the latest link and user details for the logged-in user
 export const getLatestLink = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-
+    const { userId } = req.params;
     // Fetch latest link for user
-    const latestLink = await linkModel.findOne({ userId }).sort({ createdAt: -1 });
+    const latestLink = await linkModel
+      .findOne({ userId })
+      .sort({ createdAt: -1 });
 
     if (!latestLink) {
       return next(new AppError("No link found for this user", 404));
     }
 
     // Fetch user details
-    const user = await userModel.findById(userId).select("name email userName isPro profilePic");
+    const user = await userModel
+      .findById(userId)
+      .select("name email userName isPro profilePic");
 
     if (!user) {
       return next(new AppError("User not found", 404));
@@ -204,5 +207,3 @@ export const deleteLink = async (req, res, next) => {
     next(error);
   }
 };
-
-
