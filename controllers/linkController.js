@@ -58,6 +58,46 @@ export const createLink = async (req, res, next) => {
   }
 };
 
+// Get the latest link and user details for the logged-in user
+export const getLatestLink = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    // Fetch latest link for user
+    const latestLink = await linkModel.findOne({ userId }).sort({ createdAt: -1 });
+
+    if (!latestLink) {
+      return next(new AppError("No link found for this user", 404));
+    }
+
+    // Fetch user details
+    const user = await userModel.findById(userId).select("name email userName isPro profilePic");
+
+    if (!user) {
+      return next(new AppError("User not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Latest link and user details fetched successfully",
+      data: {
+        slug: latestLink.slug,
+        whatsappLink: latestLink.whatsappLink,
+        brandedPageUrl: latestLink.brandedPageUrl,
+        user: {
+          name: user.name,
+          email: user.email,
+          userName: user.userName,
+          isPro: user.isPro,
+          profilePic: user.profilePic,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get previous links
 export const getPrevLinks = async (req, res, next) => {
   try {
