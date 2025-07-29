@@ -29,7 +29,7 @@ export const createLink = async (req, res, next) => {
       }
 
       username = user.userName;
-      brandedPageUrl = `${process.env.BRAND_PAGE_URL}/${username}`;
+      brandedPageUrl = `${process.env.CLIENT_URL}/${username}`;
     }
 
     const newLink = new linkModel({
