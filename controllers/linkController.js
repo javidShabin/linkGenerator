@@ -1,4 +1,5 @@
 import linkModel from "../models/linkModel.js";
+import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
 import { generateSlug, generateWhatsAppLink } from "../utils/generateLink.js";
 
@@ -7,28 +8,50 @@ import { generateSlug, generateWhatsAppLink } from "../utils/generateLink.js";
 // Create whatsapp link
 export const createLink = async (req, res, next) => {
   try {
-    // Destructer the user phone number slug and message from request body
     const { phone, message, customSlug } = req.body;
-    // Get user id from authentication
     const userId = req.user.id;
-    // Generete the link pass customer to the generating function
-    const slug = generateSlug(customSlug);
-    const fullLink = generateWhatsAppLink(phone, message);
 
-    // Create and save the new whatsapp generated link
+    if (!phone) return next(new AppError("Phone number is required", 400));
+    if (!message) return next(new AppError("Message is required", 400));
+
+    const slug = generateSlug(customSlug);
+    const whatsappLink = generateWhatsAppLink(phone, message);
+
+    let brandedPageUrl = null;
+    let username = null;
+
+    const user = await userModel.findById(userId);
+    if (!user) return next(new AppError("User not found", 404));
+
+    if (user.isPro) {
+      if (!user.userName) {
+        return next(new AppError("Username required for branded page", 400));
+      }
+
+      username = user.userName;
+      brandedPageUrl = `${process.env.BRAND_PAGE_URL}/${username}`;
+    }
+
     const newLink = new linkModel({
+      userId,
       slug,
-      whatsappLink: fullLink,
       phone,
       message,
-      userId,
+      whatsappLink,
+      brandedPageUrl,
+      username,
     });
+
     await newLink.save();
-    // Send response to client
+
     res.status(201).json({
       success: true,
-      message: "Link is generated",
-      data: newLink,
+      message: "Link generated successfully",
+      data: {
+        slug: newLink.slug,
+        whatsappLink: newLink.whatsappLink,
+        brandedPageUrl: newLink.brandedPageUrl,
+      },
     });
   } catch (error) {
     next(error);
@@ -141,3 +164,5 @@ export const deleteLink = async (req, res, next) => {
     next(error);
   }
 };
+
+

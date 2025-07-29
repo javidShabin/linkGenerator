@@ -30,8 +30,22 @@ const linkSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // 🆕 Branded page support
+    brandedPageUrl: {
+      type: String,
+      default: null,
+    },
+    isBranded: {
+      type: Boolean,
+      default: false,
+    },
+    username: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
 
 export default mongoose.model("Link", linkSchema);
+
