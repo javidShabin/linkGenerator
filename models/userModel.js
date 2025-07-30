@@ -23,12 +23,17 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    profileImg: {
+      type: String,
+      default:
+        "//ui-avatars.com/api/?name=User&background=0D8ABC&color=fff&size=128",
+    },
     role: {
       type: String,
       enum: ["user", "admin", "pro"],
       default: "user",
     },
-     lastLogin: {
+    lastLogin: {
       type: Date,
     },
   },

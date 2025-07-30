@@ -1,5 +1,6 @@
 import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
+import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
 
 // Get all users list for admin
 export const getAllUsers = async (req, res, next) => {
@@ -15,14 +16,44 @@ export const getAllUsers = async (req, res, next) => {
   }
 }
 
-// User profile updating function
+// update user profile
 export const updateUserProfile = async (req, res, next) => {
   try {
-    console.log(req.file)
+    const userId = req.user.id;
+    const { userName, email, phone } = req.body;
+
+    // Prepare the data to update
+    const updateData = { userName, email, phone };
+
+    // Check if user exists
+    const user = await userModel.findById(userId);
+    if (!user) {
+      throw new AppError("No user found", 404);
+    }
+
+    // Upload profile image if file is provided
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.path);
+      if (!uploadResult.success) {
+        return res.status(500).json({
+          success: false,
+          message: uploadResult.message,
+          error: uploadResult.error,
+        });
+      }
+      updateData.profileImg = uploadResult.url;
+    }
+
+    // Update user with new data
+    await userModel.findByIdAndUpdate(userId, updateData, { new: true });
+
+    res.status(200).json({ success: true, message: "Profile updated" });
+
   } catch (error) {
-    
+    next(error);
   }
-}
+};
+
 
 // Check user is pro
 export const isProUser = async (req, res, next) => {
