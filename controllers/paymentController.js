@@ -3,16 +3,20 @@ dotenv.config();
 import userModel from "../models/userModel.js";
 import stripe from "../utils/stripe.js";
 import paymentModel from "../models/paymentModel.js";
+import { AppError } from "../utils/AppError.js";
 
 export const createCheckoutSession = async (req, res, next) => {
   try {
-
     const { plan } = req.body;
     const email = req.user.email;
 
     const user = await userModel.findOne({ email });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    if (!user) throw new AppError("User not found", 404)
 
+    if (user.isPro) {
+      throw new AppError("You are already a Pro user", 400);
+    }
     // Determine plan price
     let amount = 0;
     if (plan === "pro-plan") amount = 19900; // ₹199/year
@@ -55,16 +59,17 @@ export const createCheckoutSession = async (req, res, next) => {
 
     res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error("Stripe Checkout Error:", err.message);
+   
     res.status(400).json({ error: err.message });
   }
 };
 
-
 export const getStripeSessionDetails = async (req, res) => {
   try {
     // Fetch session from Stripe using sessionId from URL
-    const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
+    const session = await stripe.checkout.sessions.retrieve(
+      req.params.sessionId
+    );
 
     // Validate session first
     if (!session || session.payment_status !== "paid") {
@@ -84,7 +89,7 @@ export const getStripeSessionDetails = async (req, res) => {
 
     // 2. Update user isPro status
     if (userId) {
-      await userModel.findByIdAndUpdate(userId, { isPro: true, role:"pro"});
+      await userModel.findByIdAndUpdate(userId, { isPro: true, role: "pro" });
     }
 
     // 3. Respond with payment details
@@ -95,7 +100,6 @@ export const getStripeSessionDetails = async (req, res) => {
       plan: plan,
       paymentUpdated: existingPayment ? true : false,
     });
-
   } catch (err) {
     console.error("Stripe session fetch failed:", err.message);
   }
