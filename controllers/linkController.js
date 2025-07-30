@@ -74,7 +74,7 @@ export const getLatestLink = async (req, res, next) => {
     // Fetch user details
     const user = await userModel
       .findById(userId)
-      .select("name email userName isPro profilePic");
+      .select("name email userName isPro profileImg");
 
     if (!user) {
       return next(new AppError("User not found", 404));
@@ -92,7 +92,7 @@ export const getLatestLink = async (req, res, next) => {
           email: user.email,
           userName: user.userName,
           isPro: user.isPro,
-          profilePic: user.profilePic,
+          profileImg: user.profileImg,
         },
       },
     });
