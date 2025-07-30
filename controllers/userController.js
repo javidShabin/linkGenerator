@@ -1,6 +1,20 @@
 import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
 
+// Get all users list for admin
+export const getAllUsers = async (req, res, next) => {
+  try {
+    // Find the users from databse
+    const users = await userModel.find({})
+    if (!users) {
+      throw new AppError("No users found", 404)
+    }
+    res.status(200).json({message: "Fetch all users", data: users})
+  } catch (error) {
+    next(error)
+  }
+}
+
 // Check user is pro
 export const isProUser = async (req, res, next) => {
   try {

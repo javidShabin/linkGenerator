@@ -8,13 +8,14 @@ import {
 } from "../controllers/authController.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.js";
-import { isProUser } from "../controllers/userController.js";
+import { getAllUsers, isProUser } from "../controllers/userController.js";
 const router = express();
 
 router.post("/signup", signupUser);
 router.post("/login", loginUser);
 router.delete("/logout", authenticate, authorize("user", "pro"), logoutUser);
 router.get("/user-profile", authenticate, authorize("user", "pro"), userProfile);
+router.get("/get-all-users", authenticate, authorize("user", "pro"), getAllUsers)
 router.get("/check-user", authenticate, authorize("user", "pro"), checkUser);
 router.get("/check-pro",  authenticate, authorize("user","pro"), isProUser)
 
