@@ -15,6 +15,15 @@ export const getAllUsers = async (req, res, next) => {
   }
 }
 
+// User profile updating function
+export const updateUserProfile = async (req, res, next) => {
+  try {
+    console.log(req.file)
+  } catch (error) {
+    
+  }
+}
+
 // Check user is pro
 export const isProUser = async (req, res, next) => {
   try {
