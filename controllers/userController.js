@@ -6,15 +6,15 @@ import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
 export const getAllUsers = async (req, res, next) => {
   try {
     // Find the users from databse
-    const users = await userModel.find({})
+    const users = await userModel.find({});
     if (!users) {
-      throw new AppError("No users found", 404)
+      throw new AppError("No users found", 404);
     }
-    res.status(200).json({message: "Fetch all users", data: users})
+    res.status(200).json({ message: "Fetch all users", data: users });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 // update user profile
 export const updateUserProfile = async (req, res, next) => {
@@ -48,12 +48,25 @@ export const updateUserProfile = async (req, res, next) => {
     await userModel.findByIdAndUpdate(userId, updateData, { new: true });
 
     res.status(200).json({ success: true, message: "Profile updated" });
-
   } catch (error) {
     next(error);
   }
 };
 
+// Get pro users list
+export const getProUsers = async (req, res, next) => {
+  try {
+    const proUsers = await userModel.find({ isPro: true });
+    if (!proUsers) {
+      throw new AppError("Pro users not found", 404);
+    }
+    res
+      .status(200)
+      .json({ message: "Fetch pro users profiles", data: proUsers });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // Check user is pro
 export const isProUser = async (req, res, next) => {
