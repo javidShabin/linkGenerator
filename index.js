@@ -13,12 +13,7 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 server.use(
   cors({
-    origin: [
-      "https://link-generator-frontend-rust.vercel.app",
-      "https://link-generator-admin.vercel.app",
-      "http://localhost:5173",
-      "http://localhost:5174",
-    ],
+    origin: ["https://link-generator-frontend-rust.vercel.app"],
     credentials: true,
   })
 );
