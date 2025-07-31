@@ -61,9 +61,19 @@ export const createLink = async (req, res, next) => {
 // Get all generated links with total count
 export const getAllLinks = async (req, res, next) => {
   try {
-    console.log("running")
-  }catch (error) {
+    const links = await linkModel.find({});
+    const totalLinks = await linkModel.countDocuments();
 
+    res.status(200).json({
+      success: true,
+      total: totalLinks,
+    });
+  } catch (error) {
+    console.error("Error fetching links:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch links",
+    });
   }
 };
 

@@ -21,7 +21,7 @@ router.get(
   getPrevLinks
 );
 
-router.get("/get-all-links", authenticate, authorize("admin"), getAllLinks)
+router.get("/get-link-count", authenticate, authorize("admin"), getAllLinks)
 
 router.get("/get-latest-link/:userId", getLatestLink)
 
