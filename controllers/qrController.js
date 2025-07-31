@@ -145,45 +145,58 @@ export const editQrCode = async (req, res, next) => {
 
     let logoUrl = qr.logoUrl;
 
+    // If a new logo is uploaded
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.path);
-      if (!uploadResult.success) {
-        return res.status(500).json({ success: false, message: uploadResult.message });
+      if (!uploadResult.success || !uploadResult.url) {
+        return res.status(500).json({
+          success: false,
+          message: uploadResult.message || "Failed to upload logo",
+        });
       }
       logoUrl = uploadResult.url;
       qr.logoUrl = logoUrl;
     }
 
+    // Update colors if provided
     if (foregroundColor) qr.foregroundColor = foregroundColor;
     if (backgroundColor) qr.backgroundColor = backgroundColor;
 
+    // Generate new QR code buffer
     const qrBuffer = await QRCode.toBuffer(qr.whatsappLink, {
       color: {
         dark: foregroundColor || "#000000",
         light: backgroundColor || "#ffffff",
       },
       width: 400,
-      errorCorrectionLevel: 'H', // Add this for better tolerance
+      errorCorrectionLevel: 'H',
     });
 
     const qrImage = await Jimp.read(qrBuffer);
 
+    // If logo exists, add to QR
     if (logoUrl) {
-  const logoImage = await Jimp.read(logoUrl);
+      const logoImage = await Jimp.read(logoUrl);
+      logoImage.resize(100, 100);
+      const x = (qrImage.bitmap.width / 2) - (logoImage.bitmap.width / 2);
+      const y = (qrImage.bitmap.height / 2) - (logoImage.bitmap.height / 2);
+      qrImage.composite(logoImage, x, y);
+    }
 
-logoImage.resize(100, 100); 
-
-  const x = (qrImage.bitmap.width / 2) - (logoImage.bitmap.width / 2);
-  const y = (qrImage.bitmap.height / 2) - (logoImage.bitmap.height / 2);
-  qrImage.composite(logoImage, x, y);
-}
-
+    // Save the modified QR image temporarily
     const tempPath = path.join("temp", `${Date.now()}-qr.png`);
     await qrImage.writeAsync(tempPath);
 
+    // Upload new QR image to Cloudinary
     const finalUpload = await uploadToCloudinary(tempPath);
-    fs.unlinkSync(tempPath);
+    fs.unlinkSync(tempPath); // Cleanup temp file
 
+    // Check for upload success
+    if (!finalUpload.success || !finalUpload.url) {
+      throw new AppError("Failed to upload final QR code image to Cloudinary", 500);
+    }
+
+    // Save updated image URL
     qr.qrCodeImage = finalUpload.url;
     await qr.save();
 
@@ -198,5 +211,3 @@ logoImage.resize(100, 100);
     next(new AppError("Something went wrong while editing QR", 500));
   }
 };
-
-
