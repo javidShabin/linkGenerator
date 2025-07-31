@@ -10,6 +10,7 @@ import {
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.js";
 import {
+  deleteUser,
   getAllUsers,
   getProUsers,
   isProUser,
@@ -48,6 +49,7 @@ router.get(
   authorize("user", "pro", "admin"),
   checkUser
 );
+router.delete("/delete-user-profile", authenticate, authorize("admin"), deleteUser)
 router.get("/check-pro", authenticate, authorize("user", "pro"), isProUser);
 
 export default router;
