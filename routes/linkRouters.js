@@ -2,6 +2,7 @@ import express from "express";
 import {
   createLink,
   deleteLink,
+  getAllLinks,
   getLatestLink,
   getPrevLinks,
   trachLinkUsage,
@@ -19,6 +20,8 @@ router.get(
   authorize("user", "pro"),
   getPrevLinks
 );
+
+router.get("/get-all-links", authenticate, authorize("admin"), getAllLinks)
 
 router.get("/get-latest-link/:userId", getLatestLink)
 

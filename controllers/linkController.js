@@ -58,6 +58,15 @@ export const createLink = async (req, res, next) => {
   }
 };
 
+// Get all generated links with total count
+export const getAllLinks = async (req, res, next) => {
+  try {
+    console.log("running")
+  }catch (error) {
+
+  }
+};
+
 // Get the latest link and user details for the logged-in user
 export const getLatestLink = async (req, res, next) => {
   try {
