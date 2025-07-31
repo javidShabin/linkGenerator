@@ -136,6 +136,7 @@ console.log(qr.downloadCount)
 
 export const editQrCode = async (req, res, next) => {
   try {
+    res.send(req.file)
     const { id } = req.params;
     const { foregroundColor, backgroundColor } = req.body;
 
