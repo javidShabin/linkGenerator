@@ -5,11 +5,14 @@ import userRouter from "./userRouters.js"
 import linkRouter from "./linkRouters.js"
 import paymentRoutes from './paymentRoutes.js';
 import qrRouter from "./qrRouters.js"
+import googleAuthRoute from "./authRoutes.js";
 
 router.use("/user", userRouter)
 router.use("/link", linkRouter)
 router.use("/qr", qrRouter)
 router.use('/payment', paymentRoutes);
+router.use("/api/auth", googleAuthRoute);
+
 
 export default router
 
