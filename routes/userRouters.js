@@ -49,7 +49,7 @@ router.get(
   authorize("user", "pro", "admin"),
   checkUser
 );
-router.delete("/delete-user-profile", authenticate, authorize("admin"), deleteUser)
+router.delete("/delete-user-profile/:userId",authenticate, authorize("admin"), deleteUser)
 router.get("/check-pro", authenticate, authorize("user", "pro"), isProUser);
 
 export default router;

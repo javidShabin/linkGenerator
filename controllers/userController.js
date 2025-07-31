@@ -64,7 +64,7 @@ export const getProUsers = async (req, res, next) => {
     }
     res
       .status(200)
-      .json({ message: "Fetch pro users profiles", data: proUsers });
+      .json({ message: "Fetch pro users profiles", proUsers });
   } catch (error) {
     next(error);
   }
@@ -73,7 +73,7 @@ export const getProUsers = async (req, res, next) => {
 // Delete user profile
 export const deleteUser = async (req, res, next) => {
   try {
-    const { userId } = req.body;
+    const { userId } = req.params;
 
     // Delete the user from the database
     const deletedUser = await userModel.findByIdAndDelete(userId);
