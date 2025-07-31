@@ -26,17 +26,7 @@ router.get(
     });
 
     // Redirect to frontend dashboard
-//     if (user.role === "admin") {
-//   res.redirect("https://link-generator-admin.vercel.app/");
-// } else {
-//   res.redirect("https://link-generator-frontend-rust.vercel.app/");
-// }
-if (req.user.role === "admin") {
-      res.redirect("https://link-generator-admin.vercel.app/");
-    } else {
-      res.redirect("https://link-generator-frontend-rust.vercel.app/");
-    }
-   
+    res.redirect("https://link-generator-frontend-rust.vercel.app/");
   }
 );
 
