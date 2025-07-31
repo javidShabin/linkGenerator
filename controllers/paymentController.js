@@ -11,8 +11,8 @@ export const createCheckoutSession = async (req, res, next) => {
     const email = req.user.email;
 
     const user = await userModel.findOne({ email });
-    
-    if (!user) throw new AppError("User not found", 404)
+
+    if (!user) throw new AppError("User not found", 404);
 
     if (user.isPro) {
       throw new AppError("You are already a Pro user", 400);
@@ -59,12 +59,12 @@ export const createCheckoutSession = async (req, res, next) => {
 
     res.status(200).json({ url: session.url });
   } catch (err) {
-   
+    next(err);
     res.status(400).json({ error: err.message });
   }
 };
 
-export const getStripeSessionDetails = async (req, res) => {
+export const getStripeSessionDetails = async (req, res, next) => {
   try {
     // Fetch session from Stripe using sessionId from URL
     const session = await stripe.checkout.sessions.retrieve(
@@ -73,7 +73,7 @@ export const getStripeSessionDetails = async (req, res) => {
 
     // Validate session first
     if (!session || session.payment_status !== "paid") {
-      return res.status(400).json({ error: "Invalid or unpaid session." });
+      throw new AppError("Invalid or unpaid session.", 400);
     }
 
     // Extract metadata
@@ -101,6 +101,21 @@ export const getStripeSessionDetails = async (req, res) => {
       paymentUpdated: existingPayment ? true : false,
     });
   } catch (err) {
+    next(err);
     console.error("Stripe session fetch failed:", err.message);
+  }
+};
+
+export const getAllPaymentDetails = async (req, res, next) => {
+  try {
+    const getAllPayments = await paymentModel.find({});
+    if (!getAllPayments) {
+      throw new AppError("Payment details not available", 404);
+    }
+    res
+      .status(200)
+      .json({ message: "Payment details fetched", data: getAllPayments });
+  } catch (error) {
+    next(error);
   }
 };
