@@ -61,7 +61,6 @@ export const createLink = async (req, res, next) => {
 // Get all generated links with total count
 export const getAllLinks = async (req, res, next) => {
   try {
-    const links = await linkModel.find({});
     const totalLinks = await linkModel.countDocuments();
 
     res.status(200).json({

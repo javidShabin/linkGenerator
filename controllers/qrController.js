@@ -145,7 +145,7 @@ export const editQrCode = async (req, res, next) => {
 
     let logoUrl = qr.logoUrl;
 
-    // If a new logo is uploaded
+    // Upload new logo if provided
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.path);
       if (!uploadResult.success || !uploadResult.url) {
@@ -158,11 +158,11 @@ export const editQrCode = async (req, res, next) => {
       qr.logoUrl = logoUrl;
     }
 
-    // Update colors if provided
+    // Update QR colors if changed
     if (foregroundColor) qr.foregroundColor = foregroundColor;
     if (backgroundColor) qr.backgroundColor = backgroundColor;
 
-    // Generate new QR code buffer
+    // Generate new QR code image
     const qrBuffer = await QRCode.toBuffer(qr.whatsappLink, {
       color: {
         dark: foregroundColor || "#000000",
@@ -174,7 +174,7 @@ export const editQrCode = async (req, res, next) => {
 
     const qrImage = await Jimp.read(qrBuffer);
 
-    // If logo exists, add to QR
+    // Add logo to QR if available
     if (logoUrl) {
       const logoImage = await Jimp.read(logoUrl);
       logoImage.resize(100, 100);
@@ -183,22 +183,32 @@ export const editQrCode = async (req, res, next) => {
       qrImage.composite(logoImage, x, y);
     }
 
-    // Save the modified QR image temporarily
+    // Save to temp file
     const tempPath = path.join("temp", `${Date.now()}-qr.png`);
     await qrImage.writeAsync(tempPath);
 
-    // Upload new QR image to Cloudinary
+    // Upload final QR image to Cloudinary
     const finalUpload = await uploadToCloudinary(tempPath);
-    fs.unlinkSync(tempPath); // Cleanup temp file
 
-    // Check for upload success
+    try {
+      fs.unlinkSync(tempPath); // Cleanup temp file
+    } catch (fsErr) {
+      console.warn("Temp file deletion failed:", fsErr.message);
+    }
+
     if (!finalUpload.success || !finalUpload.url) {
       throw new AppError("Failed to upload final QR code image to Cloudinary", 500);
     }
 
-    // Save updated image URL
+    // Save final URL to DB
     qr.qrCodeImage = finalUpload.url;
-    await qr.save();
+
+    try {
+      await qr.save();
+    } catch (saveErr) {
+      console.error("Mongoose Save Error:", saveErr);
+      throw new AppError("Failed to save updated QR code to database", 500);
+    }
 
     res.status(200).json({
       success: true,
@@ -208,6 +218,6 @@ export const editQrCode = async (req, res, next) => {
 
   } catch (error) {
     console.error("Edit QR error:", error);
-    next(new AppError("Something went wrong while editing QR", 500));
+    next(error); // Preserve original error message
   }
 };
