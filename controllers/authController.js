@@ -76,6 +76,9 @@ export const loginUser = async (req, res, next) => {
         404
       );
     }
+    if (isUser.isActive !== true) {
+      throw new AppError("Your account has been deactivated by the admin.", 403)
+    }
     // Compare the password
     const passwordIsMatch = await comparePassword(password, isUser.password);
     if (!passwordIsMatch) {
@@ -143,6 +146,33 @@ export const logoutUser = async (req, res, next) => {
   }
 };
 
+// Toggle user's active status (activate/deactivate)
+export const toggleUserActiveStatus = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    // Find the user by ID
+    const user = await userModel.findById(userId);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    // Toggle isActive status
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `User has been ${user.isActive ? "activated" : "deactivated"} successfully`,
+      userId: user._id,
+      isActive: user.isActive,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 // Check user
 export const checkUser = async (req, res, next) => {
   try {
@@ -168,3 +198,4 @@ export const checkUser = async (req, res, next) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+

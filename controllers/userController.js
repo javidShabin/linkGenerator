@@ -2,15 +2,17 @@ import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
 
-// Get all users list for admin
+/// Get all users list for admin (excluding admin users)
 export const getAllUsers = async (req, res, next) => {
   try {
-    // Find the users from databse
-    const users = await userModel.find({});
-    if (!users) {
+    // Find users where role is NOT 'admin'
+    const users = await userModel.find({ role: { $ne: "admin" } });
+
+    if (!users || users.length === 0) {
       throw new AppError("No users found", 404);
     }
-    res.status(200).json({ message: "Fetch all users", data: users });
+
+    res.status(200).json({ message: "Fetched all users", users });
   } catch (error) {
     next(error);
   }
@@ -67,6 +69,33 @@ export const getProUsers = async (req, res, next) => {
     next(error);
   }
 };
+
+// Delete user profile
+export const deleteUser = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+
+    // Delete the user from the database
+    const deletedUser = await userModel.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      throw new AppError("User not found", 404)
+      
+    }
+
+    res.clearCookie("userToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+
+    res.status(200).json({ message: "User profile deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 
 // Check user is pro
 export const isProUser = async (req, res, next) => {

@@ -4,6 +4,7 @@ import {
   loginUser,
   logoutUser,
   signupUser,
+  toggleUserActiveStatus,
   userProfile,
 } from "../controllers/authController.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
@@ -36,10 +37,11 @@ router.get("/pro-users-list", authenticate, authorize("admin"), getProUsers);
 router.put(
   "/update-profile",
   authenticate,
-  authorize("user", "pro"),
+  authorize("user", "pro", "admin"),
   upload.single("profileImg"),
   updateUserProfile
 );
+router.patch("/toggle-status/:userId", authenticate, authorize("admin"), toggleUserActiveStatus);
 router.get(
   "/check-user",
   authenticate,
