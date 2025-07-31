@@ -1,5 +1,9 @@
 import QRCode from "qrcode";
 import QRCodeModel from "../models/qrModel.js";
+import Jimp from "jimp";
+import fs from "fs";
+import path from "path";
+import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
 import linkModel from "../models/linkModel.js";
 import { AppError } from "../utils/AppError.js";
 
@@ -129,3 +133,70 @@ console.log(qr.downloadCount)
     next(new AppError("Something went wrong while downloading QR", 500));
   }
 };
+
+export const editQrCode = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { foregroundColor, backgroundColor } = req.body;
+
+    const qr = await QRCodeModel.findById(id);
+    if (!qr) throw new AppError("QR code not found", 404);
+    if (req.user.id !== qr.userId.toString()) throw new AppError("Unauthorized", 401);
+
+    let logoUrl = qr.logoUrl;
+
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.path);
+      if (!uploadResult.success) {
+        return res.status(500).json({ success: false, message: uploadResult.message });
+      }
+      logoUrl = uploadResult.url;
+      qr.logoUrl = logoUrl;
+    }
+
+    if (foregroundColor) qr.foregroundColor = foregroundColor;
+    if (backgroundColor) qr.backgroundColor = backgroundColor;
+
+    const qrBuffer = await QRCode.toBuffer(qr.whatsappLink, {
+      color: {
+        dark: foregroundColor || "#000000",
+        light: backgroundColor || "#ffffff",
+      },
+      width: 400,
+      errorCorrectionLevel: 'H', // Add this for better tolerance
+    });
+
+    const qrImage = await Jimp.read(qrBuffer);
+
+    if (logoUrl) {
+  const logoImage = await Jimp.read(logoUrl);
+
+logoImage.resize(100, 100); 
+
+  const x = (qrImage.bitmap.width / 2) - (logoImage.bitmap.width / 2);
+  const y = (qrImage.bitmap.height / 2) - (logoImage.bitmap.height / 2);
+  qrImage.composite(logoImage, x, y);
+}
+
+    const tempPath = path.join("temp", `${Date.now()}-qr.png`);
+    await qrImage.writeAsync(tempPath);
+
+    const finalUpload = await uploadToCloudinary(tempPath);
+    fs.unlinkSync(tempPath);
+
+    qr.qrCodeImage = finalUpload.url;
+    await qr.save();
+
+    res.status(200).json({
+      success: true,
+      message: "QR code updated successfully",
+      qr,
+    });
+
+  } catch (error) {
+    console.error("Edit QR error:", error);
+    next(new AppError("Something went wrong while editing QR", 500));
+  }
+};
+
+
