@@ -162,19 +162,19 @@ export const editQrCode = async (req, res, next) => {
     if (foregroundColor) qr.foregroundColor = foregroundColor;
     if (backgroundColor) qr.backgroundColor = backgroundColor;
 
-    // Generate new QR code buffer
+    // Generate QR buffer
     const qrBuffer = await QRCode.toBuffer(qr.whatsappLink, {
       color: {
         dark: foregroundColor || "#000000",
         light: backgroundColor || "#ffffff",
       },
       width: 400,
-      errorCorrectionLevel: 'H',
+      errorCorrectionLevel: "H",
     });
 
     const qrImage = await Jimp.read(qrBuffer);
 
-    // If logo exists, add to QR
+    // Add logo if exists
     if (logoUrl) {
       const logoImage = await Jimp.read(logoUrl);
       logoImage.resize(100, 100);
@@ -183,20 +183,18 @@ export const editQrCode = async (req, res, next) => {
       qrImage.composite(logoImage, x, y);
     }
 
-    // Save the modified QR image temporarily
-    const tempPath = path.join("temp", `${Date.now()}-qr.png`);
+    // Save temp file
+    const tempPath = path.join("/tmp", `${Date.now()}-qr.png`);
     await qrImage.writeAsync(tempPath);
 
-    // Upload new QR image to Cloudinary
+    // Upload to Cloudinary
     const finalUpload = await uploadToCloudinary(tempPath);
-    fs.unlinkSync(tempPath); // Cleanup temp file
+    fs.unlinkSync(tempPath); // Delete temp file
 
-    // Check for upload success
     if (!finalUpload.success || !finalUpload.url) {
       throw new AppError("Failed to upload final QR code image to Cloudinary", 500);
     }
 
-    // Save updated image URL
     qr.qrCodeImage = finalUpload.url;
     await qr.save();
 
