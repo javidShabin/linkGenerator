@@ -7,7 +7,7 @@ import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
 import { generateToken } from "../utils/generateToken.js";
 import { comparePassword, hashPassword } from "../utils/hashPassword.js";
-import nodemailer from 'nodemailer';
+import { sendEmail } from "../utils/sendEmail.js";
 
 
         
@@ -31,23 +31,12 @@ export const generateOTP = async (req, res, next) => {
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);
 
-    // Send OTP via email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL,
+    // =Send email using utility
+    await sendEmail({
       to: email,
       subject: "Your OTP for Registration",
       text: `Your OTP is ${otp}. Please verify to complete your registration.`,
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
     // Hash the user password 10 round salting using bcrypt
     const hashedPassword = await hashPassword(password);
     // Save or update temporary user data with OTP
