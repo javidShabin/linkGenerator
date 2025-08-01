@@ -2,13 +2,75 @@ import {
   userLoginValidation,
   userSignupValidation,
 } from "../config/authValidations.js";
+import tempUserModel from "../models/tempUserModel.js";
 import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
 import { generateToken } from "../utils/generateToken.js";
 import { comparePassword, hashPassword } from "../utils/hashPassword.js";
+import nodemailer from 'nodemailer';
+
+
+        
 
 // **************************** Authentication**************************************
 //  *************************Singup and Login *************************************
+
+// User signup OTP generation
+export const generateOTP = async (req, res, next) => {
+  try {
+    // Validate the user details
+    userSignupValidation(req.body);
+    // Destructer user details from request body
+    const { userName, email, password, phone, role } = req.body;
+    // Check the user details in database
+    // Find the user from database
+    const isUserExist = await userModel.findOne({ email });
+    if (isUserExist) {
+      throw new AppError("User already exist", 404);
+    }
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    // Send OTP via email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: email,
+      subject: "Your OTP for Registration",
+      text: `Your OTP is ${otp}. Please verify to complete your registration.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    // Hash the user password 10 round salting using bcrypt
+    const hashedPassword = await hashPassword(password);
+    // Save or update temporary user data with OTP
+    await tempUserModel.findOneAndUpdate(
+      { email },
+      {
+        email,
+        password: hashedPassword,
+        otp, // store OTP
+        otpExpiresAt: Date.now() + 10 * 60 * 1000, // OTP expires in 10 minutes
+        userName, // Store name
+        phone, // Store phone
+      },
+      { upsert: true, new: true } // Create new or update existing
+    );
+    res.status(200).json({
+      success: true,
+      message: "OTP sent to your email. Please verify within 10 minutes.",
+    });
+  } catch (error) {
+    next(error)
+  }
+}
 
 // User singup
 export const signupUser = async (req, res, next) => {

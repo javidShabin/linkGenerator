@@ -1,6 +1,7 @@
 import express from "express";
 import {
   checkUser,
+  generateOTP,
   loginUser,
   logoutUser,
   signupUser,
@@ -21,6 +22,8 @@ import {
 import { upload } from "../middlewares/upload.js";
 
 const router = express();
+
+router.post("/generate-otp", generateOTP)
 
 router.post("/signup", signupUser);
 
