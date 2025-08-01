@@ -1,7 +1,6 @@
-import { cloudinaryInstance } from "../config/cloudinary.js";
 import userModel from "../models/userModel.js";
 import { AppError } from "../utils/AppError.js";
-
+import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
 
 /// Get all users list for admin (excluding admin users)
 export const getAllUsers = async (req, res, next) => {
@@ -34,24 +33,19 @@ export const updateUserProfile = async (req, res, next) => {
       throw new AppError("No user found", 404);
     }
 
-     // Declare a variable
-    let uploadResult;
-
-    // Add image file and update the image
+    // Upload profile image if file is provided
     if (req.file) {
-      try {
-        uploadResult = await cloudinaryInstance.uploader.upload(req.file.path);
-        // Assign the uploaded image URL to the user's image field
-        updateData.profileImg = uploadResult.secure_url;
-      } catch (uploadError) {
+      const uploadResult = await uploadToCloudinary(req.file.path);
+      if (!uploadResult.success) {
         return res.status(500).json({
           success: false,
-          message: "File upload failed",
-          error: uploadError.message,
+          message: uploadResult.message,
+          error: uploadResult.error,
         });
       }
+      updateData.profileImg = uploadResult.url;
     }
-    
+
     // Update user with new data
     await userModel.findByIdAndUpdate(userId, updateData, { new: true });
 
