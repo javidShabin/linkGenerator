@@ -19,6 +19,8 @@ const tempUserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    otp: { type: String, required: true },
+    otpExpiresAt: { type: Date, required: true },
     isPro: {
       type: Boolean,
       default: false,

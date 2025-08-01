@@ -60,6 +60,7 @@ export const generateOTP = async (req, res, next) => {
         otpExpiresAt: Date.now() + 10 * 60 * 1000, // OTP expires in 10 minutes
         userName, // Store name
         phone, // Store phone
+        role
       },
       { upsert: true, new: true } // Create new or update existing
     );
@@ -73,54 +74,67 @@ export const generateOTP = async (req, res, next) => {
 }
 
 // User singup
-export const signupUser = async (req, res, next) => {
+// User signup verification
+export const verifyOtp = async (req, res, next) => {
   try {
-    // Validate the user details
-    userSignupValidation(req.body);
-    // Destructer user details from request body
-    const { userName, email, password, phone, role } = req.body;
-    // Check the user details in database
-    // Find the user from database
-    const isUserExist = await userModel.findOne({ email });
-    if (isUserExist) {
-      throw new AppError("User already exist", 404);
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      throw new AppError("Email and OTP are required", 400);
     }
-    // Hash the user password 10 round salting using bcrypt
-    const hashedPassword = await hashPassword(password);
 
-    // Create new user
+    const tempUser = await tempUserModel.findOne({ email });
+    if (!tempUser) {
+      throw new AppError("User not found", 404);
+    }
+
+    if (tempUser.otp !== otp) {
+      throw new AppError("Invalid OTP", 400);
+    }
+
+    if (tempUser.otpExpiresAt < Date.now()) {
+      throw new AppError("OTP has expired", 400);
+    }
+
     const newUser = new userModel({
-      userName,
-      email,
-      password: hashedPassword,
-      phone,
-      role,
+      userName: tempUser.userName, // ✅ match your User model field
+      phone: tempUser.phone,
+      email: tempUser.email,
+      password: tempUser.password,
+      role: tempUser.role,
     });
-    // Save the new user
-    await newUser.save();
 
-    // Generate the user token by JWT using id , email and role
+    await newUser.save(); // ✅ VERY IMPORTANT: Save to DB
+
     const token = generateToken({
-      id: newUser.id,
+      id: newUser._id,
       email: newUser.email,
       role: newUser.role,
     });
+
     res.cookie("userToken", token, {
-      // Store the token in cookie
       httpOnly: true,
       secure: true,
       sameSite: "none",
     });
-    // Send the response to client
+
+    await tempUserModel.deleteOne({ email }); // cleanup temp user
+
     res.status(201).json({
       success: true,
       message: "User created successfully",
-      user: newUser
+      user: {
+        id: newUser._id,
+        userName: newUser.userName,
+        email: newUser.email,
+        role: newUser.role,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 // User login
 export const loginUser = async (req, res, next) => {

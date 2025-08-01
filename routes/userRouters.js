@@ -4,7 +4,7 @@ import {
   generateOTP,
   loginUser,
   logoutUser,
-  signupUser,
+  verifyOtp,
   toggleUserActiveStatus,
   userProfile,
 } from "../controllers/authController.js";
@@ -25,7 +25,7 @@ const router = express();
 
 router.post("/generate-otp", generateOTP)
 
-router.post("/signup", signupUser);
+router.post("/signup", verifyOtp);
 
 router.post("/login", loginUser);
 
