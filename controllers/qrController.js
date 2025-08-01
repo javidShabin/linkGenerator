@@ -6,6 +6,7 @@ import path from "path";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
 import linkModel from "../models/linkModel.js";
 import { AppError } from "../utils/AppError.js";
+import qrModel from "../models/qrModel.js";
 
 // Generate and store a QR code for a WhatsApp link
 export const generateQrCode = async (req, res, next) => {
@@ -208,5 +209,19 @@ export const editQrCode = async (req, res, next) => {
   } catch (error) {
     console.error("Edit QR error:", error);
     next(new AppError("Something went wrong while editing QR", 500));
+  }
+};
+
+// Get QR codes count
+export const getQRsCount = async (req, res, next) => {
+  try {
+    const count = await qrModel.countDocuments(); // more efficient than find()
+    
+    res.status(200).json({
+      success: true,
+      total: count,
+    });
+  } catch (error) {
+    next(error); // properly pass the error to your error handler
   }
 };

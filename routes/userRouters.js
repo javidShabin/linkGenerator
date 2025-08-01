@@ -13,6 +13,8 @@ import {
   deleteUser,
   getAllUsers,
   getProUsers,
+  getProUsersCount,
+  getUsersCount,
   isProUser,
   updateUserProfile,
 } from "../controllers/userController.js";
@@ -41,6 +43,15 @@ router.get(
 router.get("/get-all-users", authenticate, authorize("admin"), getAllUsers);
 
 router.get("/pro-users-list", authenticate, authorize("admin"), getProUsers);
+
+router.get("/get-user-count", authenticate, authorize("admin"), getUsersCount);
+
+router.get(
+  "/get-pro-user-count",
+  authenticate,
+  authorize("admin"),
+  getProUsersCount
+);
 
 router.put(
   "/update-profile",

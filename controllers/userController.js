@@ -18,6 +18,27 @@ export const getAllUsers = async (req, res, next) => {
   }
 };
 
+// Get users count
+export const getUsersCount = async (req, res, next) => {
+  try {
+    const count = await userModel.countDocuments({ role: { $ne: "admin" } });
+    res.status(200).json({ total: count });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Premium users count
+export const getProUsersCount = async (req, res, next) => {
+  try {
+    const count = await userModel.countDocuments({ role: { $ne: "admin" }, isPro: true });
+    res.status(200).json({ total: count });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 // update user profile
 export const updateUserProfile = async (req, res, next) => {
   try {
