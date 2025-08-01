@@ -16,7 +16,8 @@ import {
   isProUser,
   updateUserProfile,
 } from "../controllers/userController.js";
-import upload from "../middlewares/upload.js";
+import { upload } from "../middlewares/upload.js";
+
 const router = express();
 
 router.post("/signup", signupUser);
