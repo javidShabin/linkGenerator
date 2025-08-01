@@ -7,6 +7,8 @@ import {
   verifyOtp,
   toggleUserActiveStatus,
   userProfile,
+  generateForgotPasswordOtp,
+  verifyForgotPasswordOtp,
 } from "../controllers/authController.js";
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/authorize.js";
@@ -35,6 +37,10 @@ router.delete(
   authorize("user", "pro", "admin"),
   logoutUser
 );
+
+router.post("/forgot-password/otp", generateForgotPasswordOtp);
+
+router.put("/forgot-password/reset", verifyForgotPasswordOtp)
 
 router.get(
   "/user-profile",

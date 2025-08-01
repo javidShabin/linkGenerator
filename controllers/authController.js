@@ -10,8 +10,6 @@ import { comparePassword, hashPassword } from "../utils/hashPassword.js";
 import { sendEmail } from "../utils/sendEmail.js";
 
 
-        
-
 // **************************** Authentication**************************************
 //  *************************Singup and Login *************************************
 
@@ -236,6 +234,92 @@ export const toggleUserActiveStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+// Generate forgot password OTP
+export const generateForgotPasswordOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    
+
+    if (!email) {
+      throw new AppError("Email is required", 400);
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+     // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    await sendEmail({
+      to: email,
+      subject: "OTP for Password Reset",
+      text: `Your OTP for resetting password is ${otp}. It will expire in 10 minutes.`,
+    });
+
+    await tempUserModel.findOneAndUpdate(
+      { email },
+      {
+        email,
+        otp,
+        otpExpiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      },
+      { upsert: true, new: true }
+    );
+    res.status(200).json({
+      success: true,
+      message: "OTP sent to your email for password reset.",
+    });
+  } catch (error) {
+    next(error)
+  }
+}
+
+// Verify the forgot OTP password
+export const verifyForgotPasswordOtp = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      throw new AppError("All fields are required", 400);
+    }
+
+    const tempUser = await tempUserModel.findOne({email})
+    if (!tempUser) {
+      throw new AppError("User not found", 400);
+    }
+    if (tempUser.otp !== otp) {
+      throw new AppError("Invalid OTP", 400);
+    }
+
+    if (tempUser.otpExpiresAt < Date.now()) {
+      throw new AppError("OTP has expired", 400);
+    }
+    // Hash the user password 10 round salting using bcrypt
+    const hashedPassword = await hashPassword(newPassword);
+    // Update password
+    const updatedUser = await userModel.findOneAndUpdate(
+      { email },
+      { password: hashedPassword },
+      { new: true }
+    );
+
+     if (!updatedUser) {
+      throw new AppError("User not found", 404);
+    }
+
+    // Delete tempUser entry
+    await tempUserModel.deleteOne({ email });
+
+    res.status(200).json({
+      success: true,
+      message: "Password has been reset successfully.",
+    });
+
+  } catch (error) {
+    next(error)
+  }
+}
 
 
 // Check user
